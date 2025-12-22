@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en" ng-app="Dashboard">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StrayConnect</title>
+    <link rel="stylesheet" type="text/css" href="CSS/bootstrap.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+      body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      }
+      
+      .main-container {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        margin: 20px auto;
+        padding: 30px;
+        backdrop-filter: blur(10px);
+      }
+      
+      .header-section {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 20px 0;
+        border-bottom: 2px solid #e9ecef;
+      }
+      
+      .header-section h1 {
+        color: #2c3e50;
+        font-weight: 700;
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+      }
+      
+      .header-section .subtitle {
+        color: #6c757d;
+        font-size: 1.1rem;
+        font-weight: 300;
+      }
+      
+      .section-card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        border: 1px solid #e9ecef;
+      }
+      
+      .section-title {
+        color: #495057;
+        font-weight: 600;
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      
+      .form-control {
+        border-radius: 10px;
+        border: 2px solid #e9ecef;
+        padding: 12px 15px;
+        transition: all 0.3s ease;
+      }
+      
+      .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+      }
+      
+      .btn-primary {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      }
+      
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      }
+      
+      .btn-outline-primary {
+        border: 2px solid #667eea;
+        color: #667eea;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+      }
+      
+      .btn-outline-danger {
+        border: 2px solid #e74c3c;
+        color: #e74c3c;
+        border-radius: 20px;
+        transition: all 0.3s ease;
+      }
+      
+      #ImageList.media-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 20px;
+        align-items: start;
+        margin-top: 20px;
+      }
+      
+      .media-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        background: white;
+        transition: all 0.3s ease;
+      }
+      
+      .media-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+      }
+      
+      .media-thumb {
+        width: 100%;
+        height: 200px;
+        background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        position: relative;
+      }
+      
+      .media-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform 0.3s ease;
+      }
+      
+      .media-card:hover .media-thumb img {
+        transform: scale(1.05);
+      }
+      
+      .media-body {
+        padding: 20px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      
+      .media-title {
+        display: block;
+        margin-bottom: 15px;
+        font-weight: 700;
+        font-size: 16px;
+        color: #2c3e50;
+        word-break: break-word;
+      }
+      
+      .media-body > div {
+        margin-bottom: 8px;
+        color: #6c757d;
+      }
+      
+      .media-actions {
+        margin-top: 15px;
+        display: flex;
+        gap: 10px;
+      }
+      
+      .video-link {
+        display: inline-block;
+        padding: 15px 20px;
+        border-radius: 10px;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+      }
+      
+      .video-link:hover {
+        transform: scale(1.05);
+        color: white;
+      }
+      
+      .image-error {
+        color: #e74c3c;
+        font-size: 12px;
+        padding: 8px 0;
+        display: none;
+      }
+      
+      .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+      
+      .status-found { background: #d4edda; color: #155724; }
+      .status-lost { background: #f8d7da; color: #721c24; }
+      .status-adopted { background: #d1ecf1; color: #0c5460; }
+    </style>
+      <script type="text/javascript" src="JS/bootstrap.js"></script>
+      <script type="text/javascript" src="JS/bootstrap.bundle.min.js"></script>
+      <script type="text/javascript" src="JS/jquery-3.6.0.min.js"></script>
+
+      <script type="text/javascript" src="JS/app.js"></script>
+
+  </head>
+  
+  <body>
+    <div class="container-fluid">
+      <div class="main-container">
+        <!-- Header -->
+        <div class="header-section">
+          <h1><i class="fas fa-paw"></i> StrayConnect</h1>
+          <p class="subtitle">Connecting lost pets with their families</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="section-card">
+          <h4 class="section-title">
+            <i class="fas fa-cloud-upload-alt"></i>
+            Report a Pet
+          </h4>
+          <form id="newAssetForm">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="FileName" class="form-label"><i class="fas fa-file-image"></i> Photo Name</label>
+                  <input type="text" class="form-control" id="FileName" placeholder="Enter a name for this photo">
+                </div>
+                <div class="mb-3">
+                  <label for="userID" class="form-label"><i class="fas fa-id-card"></i> Your ID</label>
+                  <input type="string" class="form-control" id="userID" placeholder="Enter your user ID">
+                </div>
+                <div class="mb-3">
+                  <label for="userName" class="form-label"><i class="fas fa-user"></i> Your Name</label>
+                  <input type="text" class="form-control" id="userName" placeholder="Enter your name">
+                </div>
+                <div class="mb-3">
+                  <label for="location" class="form-label"><i class="fas fa-map-marker-alt"></i> Location</label>
+                  <input type="text" class="form-control" id="location" placeholder="Where was the pet seen?">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="petType" class="form-label"><i class="fas fa-dog"></i> Pet Type</label>
+                  <input type="text" class="form-control" id="petType" placeholder="Dog, Cat, etc.">
+                </div>
+                <div class="mb-3">
+                  <label for="status" class="form-label"><i class="fas fa-info-circle"></i> Status</label>
+                  <select class="form-control" id="status">
+                    <option value="">Select status...</option>
+                    <option value="found">Found</option>
+                    <option value="lost">Lost</option>
+                    <option value="adopted">Adopted</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="description" class="form-label"><i class="fas fa-comment"></i> Description</label>
+                  <textarea class="form-control" id="description" rows="3" placeholder="Describe the pet and circumstances..."></textarea>
+                </div>
+                <div class="mb-3">
+                  <label for="UpFile" class="form-label"><i class="fas fa-camera"></i> Pet Photo</label>
+                  <input type="file" class="form-control" id="UpFile" accept="image/*,video/*">
+                </div>
+              </div>
+            </div>
+            <div class="text-center">
+              <button type="button" id="subNewForm" class="btn btn-primary btn-lg">
+                <i class="fas fa-upload"></i> Submit Report
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- View Section -->
+        <div class="section-card">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="section-title mb-0">
+              <i class="fas fa-images"></i>
+              Pet Reports
+            </h4>
+            <button id="retImages" type="button" class="btn btn-primary">
+              <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+          </div>
+          <div id="ImageList">
+            <div class="text-center py-5">
+              <i class="fas fa-paw fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">Click "Refresh" to view all pet reports</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+  </body>
+</html>
