@@ -3,6 +3,7 @@ const CREATE_URL = "https://prod-18.switzerlandnorth.logic.azure.com:443/workflo
 const GETALL_URL = "https://prod-15.switzerlandnorth.logic.azure.com:443/workflows/8c8fd8f17cc44716bf123ecf1a433a95/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=Kl85CdlAdHaVfFpGUS13uChrHkrLSrgF1_fUaYV-SP0";
 const UPDATE_URL = "https://prod-31.switzerlandnorth.logic.azure.com:443/workflows/d45818567cdf47d8a23f54ebfd31275e/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=GlKqg4n08ZZj_cwe_ommOjvvLPVLINI-70GvacT6Ahg";
 const DELETE_URL = "https://prod-05.switzerlandnorth.logic.azure.com:443/workflows/478ff23130074d8b84150cb363b52a35/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=DnKzpI0DiyNMGklEqZt-iqijD4PJ9SuevZoJARgKQ5A";
+const TRANSLATE_URL = "https://prod-01.switzerlandnorth.logic.azure.com:443/workflows/d711617ac21d40238a1891decd88914a/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=V-P42mUowrpkaQDNRgEmhpPDm1Qv5Z2uxRbcyiYNWmY";
 
 // === Blob account endpoint ===
 const BLOB_ACCOUNT = "https://petblobstorev2.blob.core.windows.net";
@@ -35,6 +36,7 @@ $(document).ready(function () {
   // buttons added dynamically inside cards
   $(document).on("click", ".btn-delete", handleDelete);
   $(document).on("click", ".btn-update", handleUpdate);
+  $(document).on("click", ".btn-translate", handleTranslate);
 });
 
 // === Upload new asset (CREATE) ===
@@ -162,6 +164,7 @@ function getImages() {
                   <div>Description: ${escapeHtml(description || "(no description)")}</div>
                   <div class="media-actions">
                     <button class="btn btn-sm btn-outline-primary btn-update">Update</button>
+                    <button class="btn btn-sm btn-outline-info btn-translate">Translate</button>
                     ${isAdmin ? '<button class="btn btn-sm btn-outline-danger btn-delete">Delete</button>' : ''}
                   </div>
                 </div>
@@ -186,6 +189,7 @@ function getImages() {
                   <div>Description: ${escapeHtml(description || "(no description)")}</div>
                   <div class="media-actions">
                     <button class="btn btn-sm btn-outline-primary btn-update">Update</button>
+                    <button class="btn btn-sm btn-outline-info btn-translate">Translate</button>
                     ${isAdmin ? '<button class="btn btn-sm btn-outline-danger btn-delete">Delete</button>' : ''}
                   </div>
                   <div class="image-error"></div>
@@ -381,4 +385,106 @@ function escapeAttr(s) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+// === TRANSLATE functionality ===
+function handleTranslate() {
+  const $card = $(this).closest(".media-card");
+  showTranslateModal($card);
+}
+
+function showTranslateModal($card) {
+  const modal = `
+    <div id="translateModal" class="modal" style="display:block; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+      <div class="modal-content" style="background:#fff; margin:10% auto; padding:20px; border:1px solid #888; width:500px; border-radius:8px; max-height:80vh; overflow-y:auto;">
+        <span class="close" style="color:#aaa; float:right; font-size:28px; font-weight:bold; cursor:pointer;">&times;</span>
+        <h3><i class="fas fa-language"></i> Translate Pet Information</h3>
+        <div style="margin-bottom:15px;">
+          <label>Target Language:</label><br>
+          <select id="targetLanguage" style="width:100%; padding:8px; margin-top:5px;">
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="it">Italian</option>
+            <option value="pt">Portuguese</option>
+            <option value="ru">Russian</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+            <option value="zh">Chinese</option>
+            <option value="ar">Arabic</option>
+          </select>
+        </div>
+        <div style="margin-bottom:15px;">
+          <button type="button" id="translateBtn" style="padding:10px 20px; background:#17a2b8; color:white; border:none; border-radius:4px; width:100%;">
+            <i class="fas fa-language"></i> Translate
+          </button>
+        </div>
+        <div id="translationResult" style="margin-top:20px; padding:15px; background:#f8f9fa; border-radius:4px; display:none;">
+          <h5>Translation Result:</h5>
+          <div id="translatedContent"></div>
+        </div>
+        <div style="text-align:right; margin-top:20px;">
+          <button type="button" id="closeTranslate" style="padding:8px 16px;">Close</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  $('body').append(modal);
+  
+  $('#translateModal .close, #closeTranslate').click(() => $('#translateModal').remove());
+  
+  $('#translateBtn').click(function() {
+    const targetLang = $('#targetLanguage').val();
+    const petType = $card.data('pettype') || '';
+    const status = $card.data('status') || '';
+    const location = $card.data('location') || '';
+    const description = $card.data('description') || '';
+    
+    const textToTranslate = `Pet Type: ${petType}\nStatus: ${status}\nLocation: ${location}\nDescription: ${description}`;
+    
+    if (!textToTranslate.trim()) {
+      alert('No text to translate');
+      return;
+    }
+    
+    $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Translating...');
+    
+    const payload = {
+      text: textToTranslate,
+      to: targetLang
+    };
+    
+    $.ajax({
+      url: TRANSLATE_URL,
+      type: "POST",
+      contentType: "application/json",
+      data: JSON.stringify(payload),
+      success: function(data) {
+        console.log('Translation response:', data);
+        
+        let translatedText = '';
+        if (typeof data === 'string') {
+          translatedText = data;
+        } else if (data.translatedText) {
+          translatedText = data.translatedText;
+        } else if (data.translation) {
+          translatedText = data.translation;
+        } else if (data.result) {
+          translatedText = data.result;
+        } else {
+          translatedText = JSON.stringify(data);
+        }
+        
+        $('#translatedContent').html(`<pre style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(translatedText)}</pre>`);
+        $('#translationResult').show();
+        $('#translateBtn').prop('disabled', false).html('<i class="fas fa-language"></i> Translate');
+      },
+      error: function(xhr, status, error) {
+        console.error('Translation failed:', status, error, xhr?.responseText);
+        alert('Translation failed. Please try again.');
+        $('#translateBtn').prop('disabled', false).html('<i class="fas fa-language"></i> Translate');
+      }
+    });
+  });
 }
