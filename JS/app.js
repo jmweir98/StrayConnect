@@ -4,6 +4,7 @@ const GETALL_URL = "https://prod-15.switzerlandnorth.logic.azure.com:443/workflo
 const UPDATE_URL = "https://prod-31.switzerlandnorth.logic.azure.com:443/workflows/d45818567cdf47d8a23f54ebfd31275e/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=GlKqg4n08ZZj_cwe_ommOjvvLPVLINI-70GvacT6Ahg";
 const DELETE_URL = "https://prod-05.switzerlandnorth.logic.azure.com:443/workflows/478ff23130074d8b84150cb363b52a35/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=DnKzpI0DiyNMGklEqZt-iqijD4PJ9SuevZoJARgKQ5A";
 const TRANSLATE_URL = "https://prod-01.switzerlandnorth.logic.azure.com:443/workflows/d711617ac21d40238a1891decd88914a/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=V-P42mUowrpkaQDNRgEmhpPDm1Qv5Z2uxRbcyiYNWmY";
+const SEARCH_URL = "https://prod-07.switzerlandnorth.logic.azure.com:443/workflows/ea1b75baa2d342c793b21652e9883d31/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=8eKfr_FClz4KLPTiURM0-oHCbH08nm2_rVSfwBeHeFs";
 
 // === Blob account endpoint ===
 const BLOB_ACCOUNT = "https://petblobstorev2.blob.core.windows.net";
@@ -37,6 +38,12 @@ $(document).ready(function () {
   $(document).on("click", ".btn-delete", handleDelete);
   $(document).on("click", ".btn-update", handleUpdate);
   $(document).on("click", ".btn-translate", handleTranslate);
+  
+  // Search functionality
+  $("#searchBtn").click(performSearch);
+  $("#searchInput").keypress(function(e) {
+    if (e.which === 13) performSearch();
+  });
 });
 
 // === Upload new asset (CREATE) ===
@@ -80,6 +87,14 @@ function submitNewAsset() {
 function getImages() {
   const $list = $("#ImageList");
   const isAdmin = localStorage.getItem('strayconnect_isAdmin') === 'true';
+  
+  // Reset search values
+  $("#searchInput").val("");
+  $("#petTypeFilter").val("");
+  $("#statusFilter").val("");
+  $("#locationFilter").val("");
+  $("#topResults").val("25");
+  
   $list
     .addClass("media-grid")
     .html('<div class="spinner-border" role="status"><span>Loading...</span></div>');
@@ -104,6 +119,8 @@ function getImages() {
         $list.html("<p>No media found.</p>");
         return;
       }
+
+      updatePetTypeDropdown(items);
 
       let videoCounter = 0;
       const cards = [];
@@ -250,6 +267,25 @@ function handleDelete() {
 }
 
 // === UPDATE (Replace document) ===
+function updatePetTypeDropdown(items) {
+  const petTypes = new Set();
+  items.forEach(item => {
+    const petType = unwrapMaybeBase64(item.petType || item.PetType || "").toLowerCase();
+    if (petType) petTypes.add(petType);
+  });
+  
+  const $dropdown = $("#petTypeFilter");
+  const currentValue = $dropdown.val();
+  $dropdown.find('option:not(:first)').remove();
+  
+  [...petTypes].sort().forEach(type => {
+    $dropdown.append(`<option value="${type}">${type.charAt(0).toUpperCase() + type.slice(1)}</option>`);
+  });
+  
+  $dropdown.val(currentValue);
+}
+
+// === UPDATE (Replace document) ===
 function handleUpdate() {
   const $card = $(this).closest(".media-card");
   showUpdateForm($card);
@@ -385,6 +421,157 @@ function escapeAttr(s) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+// === SEARCH functionality ===
+function performSearch() {
+  const query = $("#searchInput").val().trim();
+  const petType = $("#petTypeFilter").val();
+  const status = $("#statusFilter").val();
+  const location = $("#locationFilter").val();
+  const topResults = parseInt($("#topResults").val()) || 25;
+  
+  searchPets(query, { petType, status, location, topResults });
+}
+
+function searchPets(q, filters = {}) {
+  let searchQuery = q || "";
+  if (filters.location) {
+    searchQuery = searchQuery ? `${searchQuery} ${filters.location}` : filters.location;
+  }
+  
+  const payload = {
+    query: searchQuery,
+    status: filters.status || "",
+    petType: filters.petType || "",
+    top: filters.topResults || 25
+  };
+
+  const $list = $("#ImageList");
+  $list.html('<div class="spinner-border" role="status"><span>Searching...</span></div>');
+
+  $.ajax({
+    url: SEARCH_URL,
+    type: "POST",
+    contentType: "application/json",
+    dataType: "json",
+    data: JSON.stringify(payload),
+    success: function (data) {
+      console.log("Search response:", data);
+      renderSearchResults(data);
+    },
+    error: function (xhr, status, error) {
+      console.error("Search failed:", status, error, xhr?.responseText);
+      $list.html("<p style='color:red;'>Search failed. Check console.</p>");
+    }
+  });
+}
+
+
+function renderSearchResults(data) {
+  const $list = $("#ImageList");
+  const isAdmin = localStorage.getItem('strayconnect_isAdmin') === 'true';
+  
+  const items = Array.isArray(data.results) ? data.results : 
+    (typeof data.results === 'string' ? JSON.parse(data.results) : []);
+  
+  console.log("Full search response:", data);
+  console.log("Parsed items:", items);
+
+  
+  if (!Array.isArray(items) || items.length === 0) {
+    $list.html("<p>No search results found.</p>");
+    return;
+  }
+  
+  let videoCounter = 0;
+  const cards = [];
+  
+  $.each(items, function(_, val) {
+    try {
+      const id = unwrapMaybeBase64(val.id || val.Id || "");
+      const pk = unwrapMaybeBase64(val.pk || val.Pk || val.PK || "");
+      const filePath = unwrapMaybeBase64(val.filePath || val.FilePath || "");
+      const fileLocator = unwrapMaybeBase64(val.fileLocator || val.FileLocator || "");
+      const fileName = unwrapMaybeBase64(val.fileName || val.FileName || "");
+      const userName = unwrapMaybeBase64(val.userName || val.UserName || "");
+      const userID = unwrapMaybeBase64(val.userID || val.UserID || val.UserId || "");
+      const petType = unwrapMaybeBase64(val.petType || val.PetType || "");
+      const status = unwrapMaybeBase64(val.status || val.Status || "");
+      const location = unwrapMaybeBase64(val.location || val.Location || "");
+      const description = unwrapMaybeBase64(val.description || val.Description || "");
+      const contentType = val.contentType || val.ContentType || "";
+      
+      const fullUrl = buildBlobUrl(filePath);
+      const isVideo = isLikelyVideo({ contentType, url: fullUrl, fileName });
+      
+      const cardAttrs = `
+        data-id="${escapeAttr(id)}"
+        data-pk="${escapeAttr(pk)}"
+        data-filepath="${escapeAttr(filePath)}"
+        data-filelocator="${escapeAttr(fileLocator)}"
+        data-filename="${escapeAttr(fileName)}"
+        data-username="${escapeAttr(userName)}"
+        data-userid="${escapeAttr(userID)}"
+        data-pettype="${escapeAttr(petType)}"
+        data-status="${escapeAttr(status)}"
+        data-location="${escapeAttr(location)}"
+        data-description="${escapeAttr(description)}"
+      `;
+      
+      if (isVideo) {
+        videoCounter += 1;
+        const label = `video${videoCounter}`;
+        cards.push(`
+          <div class="media-card" ${cardAttrs}>
+            <div class="media-thumb">
+              <a class="video-link" href="${fullUrl}" target="_blank" download="${escapeAttr(fileName || label)}">${label}</a>
+            </div>
+            <div class="media-body">
+              <span class="media-title">${escapeHtml(fileName || "(unnamed)")}</span>
+              <div>Uploaded by: ${escapeHtml(userName || "(unknown)")} (id: ${escapeHtml(userID || "(unknown)")})</div>
+              <div>Pet Type: ${escapeHtml(petType || "(unknown)")}</div>
+              <div>Status: ${escapeHtml(status || "(unknown)")}</div>
+              <div>Location: ${escapeHtml(location || "(unknown)")}</div>
+              <div>Description: ${escapeHtml(description || "(no description)")}</div>
+              <div class="media-actions">
+                <button class="btn btn-sm btn-outline-primary btn-update">Update</button>
+                <button class="btn btn-sm btn-outline-info btn-translate">Translate</button>
+                ${isAdmin ? '<button class="btn btn-sm btn-outline-danger btn-delete">Delete</button>' : ''}
+              </div>
+            </div>
+          </div>
+        `);
+      } else {
+        const safeLabel = escapeHtml(fileName || fullUrl);
+        cards.push(`
+          <div class="media-card" ${cardAttrs}>
+            <div class="media-thumb">
+              <img src="${fullUrl}" alt="${safeLabel}" onerror="imageFallbackToLink(this, '${fullUrl.replace(/'/g,"\\'")}', '${safeLabel.replace(/'/g,"\\'")}')" />
+            </div>
+            <div class="media-body">
+              <span class="media-title">${safeLabel}</span>
+              <div>Uploaded by: ${escapeHtml(userName || "(unknown)")} (id: ${escapeHtml(userID || "(unknown)")})</div>
+              <div>Pet Type: ${escapeHtml(petType || "(unknown)")}</div>
+              <div>Status: ${escapeHtml(status || "(unknown)")}</div>
+              <div>Location: ${escapeHtml(location || "(unknown)")}</div>
+              <div>Description: ${escapeHtml(description || "(no description)")}</div>
+              <div class="media-actions">
+                <button class="btn btn-sm btn-outline-primary btn-update">Update</button>
+                <button class="btn btn-sm btn-outline-info btn-translate">Translate</button>
+                ${isAdmin ? '<button class="btn btn-sm btn-outline-danger btn-delete">Delete</button>' : ''}
+              </div>
+              <div class="image-error"></div>
+            </div>
+          </div>
+        `);
+      }
+    } catch (err) {
+      console.error("Error building search result card:", err, val);
+    }
+  });
+  
+  $list.html(cards.join(""));
 }
 
 // === TRANSLATE functionality ===
