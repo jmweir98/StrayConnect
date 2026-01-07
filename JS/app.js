@@ -25,7 +25,9 @@ $(document).ready(function () {
   $('#userName').val(userName);
   $('#userID').val(userID);
 
-  $("#retImages").click(getImages);
+  $("#retImages").click(() => {
+    getImages('#GalleryList');
+  });
   $("#subNewForm").click(submitNewAsset);
   $("#logoutBtn").click(() => {
     localStorage.removeItem('strayconnect_userName');
@@ -75,6 +77,10 @@ function submitNewAsset() {
     success: (data) => {
       console.log("Upload response:", data);
       getImages();
+      // Refresh carousel if on home page
+      if ($('#home-section').hasClass('active')) {
+        loadLostPetsCarousel();
+      }
     },
     error: (xhr, status, err) => {
       console.error("Upload failed:", status, err, xhr?.responseText);
@@ -84,8 +90,8 @@ function submitNewAsset() {
 }
 
 // === Retrieve and render media list (GET ALL) ===
-function getImages() {
-  const $list = $("#ImageList");
+function getImages(targetList = '#ImageList') {
+  const $list = $(targetList);
   const isAdmin = localStorage.getItem('strayconnect_isAdmin') === 'true';
   
   // Reset search values
@@ -359,6 +365,10 @@ function showUpdateForm($card) {
         console.log("Update response:", data);
         $('#updateModal').remove();
         getImages();
+        // Refresh carousel if on home page
+        if ($('#home-section').hasClass('active')) {
+          loadLostPetsCarousel();
+        }
       },
       error: (xhr, status, err) => {
         console.error("Update failed:", status, err, xhr?.responseText);
@@ -431,6 +441,16 @@ function performSearch() {
   const location = $("#locationFilter").val();
   const topResults = parseInt($("#topResults").val()) || 25;
   
+  // Use getImages with filters to show in same container
+  const $list = $("#GalleryList");
+  $list.html('<div class="spinner-border" role="status"><span>Searching...</span></div>');
+  
+  // If no search criteria, just load all
+  if (!query && !petType && !status && !location) {
+    getImages('#GalleryList');
+    return;
+  }
+  
   searchPets(query, { petType, status, location, topResults });
 }
 
@@ -447,7 +467,7 @@ function searchPets(q, filters = {}) {
     top: filters.topResults || 25
   };
 
-  const $list = $("#ImageList");
+  const $list = $("#GalleryList");
   $list.html('<div class="spinner-border" role="status"><span>Searching...</span></div>');
 
   $.ajax({
@@ -458,7 +478,7 @@ function searchPets(q, filters = {}) {
     data: JSON.stringify(payload),
     success: function (data) {
       console.log("Search response:", data);
-      renderSearchResults(data);
+      renderSearchResults(data, '#GalleryList');
     },
     error: function (xhr, status, error) {
       console.error("Search failed:", status, error, xhr?.responseText);
@@ -468,8 +488,9 @@ function searchPets(q, filters = {}) {
 }
 
 
-function renderSearchResults(data) {
-  const $list = $("#ImageList");
+function renderSearchResults(data, targetList = '#GalleryList') {
+  const $list = $(targetList);
+  $list.addClass("media-grid");
   const isAdmin = localStorage.getItem('strayconnect_isAdmin') === 'true';
   
   const items = Array.isArray(data.results) ? data.results : 
@@ -480,7 +501,7 @@ function renderSearchResults(data) {
 
   
   if (!Array.isArray(items) || items.length === 0) {
-    $list.html("<p>No search results found.</p>");
+    $list.removeClass("media-grid").html("<p>No search results found.</p>");
     return;
   }
   
