@@ -76,11 +76,18 @@ function submitNewAsset() {
     type: "POST",
     success: (data) => {
       console.log("Upload response:", data);
-      getImages();
-      // Refresh carousel if on home page
-      if ($('#home-section').hasClass('active')) {
-        loadLostPetsCarousel();
-      }
+      
+      // Navigate to gallery
+      $('.nav-link').removeClass('active');
+      $('[data-section="gallery"]').addClass('active');
+      $('.page-section').removeClass('active');
+      $('#gallery-section').addClass('active');
+      
+      // Load gallery content
+      getImages('#GalleryList');
+      
+      // Clear form
+      $('#newAssetForm')[0].reset();
     },
     error: (xhr, status, err) => {
       console.error("Upload failed:", status, err, xhr?.responseText);
@@ -390,12 +397,14 @@ function handleDelete() {
 
   $.ajax({
     url: DELETE_URL,
-    type: "POST", // keep POST if your Logic App trigger is POST
+    type: "POST",
     contentType: "application/json",
     data: JSON.stringify(payload),
     success: (data) => {
       console.log("Delete response:", data);
-      getImages();
+      $card.fadeOut(300, function() {
+        $(this).remove();
+      });
     },
     error: (xhr, status, err) => {
       console.error("Delete failed:", status, err, xhr?.responseText);
@@ -496,11 +505,19 @@ function showUpdateForm($card) {
       success: (data) => {
         console.log("Update response:", data);
         $('#updateModal').remove();
-        getImages();
-        // Refresh carousel if on home page
-        if ($('#home-section').hasClass('active')) {
-          loadLostPetsCarousel();
-        }
+        
+        // Update the card display immediately
+        const $body = $card.find('.media-body');
+        $body.find('div:contains("Pet Type:")').html(`Pet Type: ${escapeHtml(payload.petType)}`);
+        $body.find('div:contains("Status:")').html(`Status: ${escapeHtml(payload.status)}`);
+        $body.find('div:contains("Location:")').html(`Location: ${escapeHtml(payload.location)}`);
+        $body.find('div:contains("Description:")').html(`Description: ${escapeHtml(payload.description)}`);
+        
+        // Update data attributes
+        $card.data('pettype', payload.petType);
+        $card.data('status', payload.status);
+        $card.data('location', payload.location);
+        $card.data('description', payload.description);
       },
       error: (xhr, status, err) => {
         console.error("Update failed:", status, err, xhr?.responseText);
@@ -731,7 +748,6 @@ function renderSearchResults(data, targetList = '#GalleryList') {
   $list.html(cards.join(""));
 }
 
-// === TRANSLATE functionality ===
 function handleTranslate() {
   const $card = $(this).closest(".media-card");
   showTranslateModal($card);

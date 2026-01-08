@@ -8,15 +8,15 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
       body {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #ff9a56;
         min-height: 100vh;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       }
       
       .main-container {
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(226, 232, 240, 0.95);
         border-radius: 20px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
         margin: 20px auto;
         padding: 30px;
         backdrop-filter: blur(10px);
@@ -26,11 +26,11 @@
         text-align: center;
         margin-bottom: 40px;
         padding: 20px 0;
-        border-bottom: 2px solid #e9ecef;
+        border-bottom: 2px solid #e2e8f0;
       }
       
       .header-section h1 {
-        color: #2c3e50;
+        color: #2d3748;
         font-weight: 700;
         font-size: 2.5rem;
         margin-bottom: 10px;
@@ -38,22 +38,22 @@
       }
       
       .header-section .subtitle {
-        color: #6c757d;
+        color: #4a5568;
         font-size: 1.1rem;
         font-weight: 300;
       }
       
       .section-card {
-        background: white;
+        background: rgba(203, 213, 224, 0.8);
         border-radius: 15px;
         padding: 25px;
         margin-bottom: 30px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-        border: 1px solid #e9ecef;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        border: 1px solid #cbd5e0;
       }
       
       .section-title {
-        color: #495057;
+        color: #2d3748;
         font-weight: 600;
         font-size: 1.3rem;
         margin-bottom: 20px;
@@ -64,34 +64,38 @@
       
       .form-control {
         border-radius: 10px;
-        border: 2px solid #e9ecef;
+        border: 2px solid #cbd5e0;
         padding: 12px 15px;
         transition: all 0.3s ease;
+        background: rgba(237, 242, 247, 0.9);
+        color: #2d3748;
       }
       
       .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        border-color: #4299e1;
+        box-shadow: 0 0 0 0.2rem rgba(66, 153, 225, 0.25);
+        background: rgba(255, 255, 255, 1);
+        color: #2d3748;
       }
       
       .btn-primary {
-        background: linear-gradient(45deg, #667eea, #764ba2);
+        background: linear-gradient(45deg, #4299e1, #63b3ed);
         border: none;
         border-radius: 25px;
         padding: 12px 30px;
         font-weight: 600;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
       }
       
       .btn-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4);
       }
       
       .btn-outline-primary {
-        border: 2px solid #667eea;
-        color: #667eea;
+        border: 2px solid #ff9a56;
+        color: #ff9a56;
         border-radius: 20px;
         transition: all 0.3s ease;
       }
@@ -123,7 +127,7 @@
       
       .navbar-brand {
         font-weight: 700;
-        color: #2c3e50 !important;
+        color: #8b4513 !important;
       }
       
       .nav-link {
@@ -133,7 +137,7 @@
       }
       
       .nav-link:hover, .nav-link.active {
-        color: #667eea !important;
+        color: #ff9a56 !important;
       }
       
       .page-section {
@@ -156,8 +160,8 @@
         border: none;
         border-radius: 15px;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        background: white;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        background: rgba(237, 242, 247, 0.9);
         transition: all 0.3s ease;
       }
       
@@ -200,13 +204,13 @@
         margin-bottom: 15px;
         font-weight: 700;
         font-size: 16px;
-        color: #2c3e50;
+        color: #2d3748;
         word-break: break-word;
       }
       
       .media-body > div {
         margin-bottom: 8px;
-        color: #6c757d;
+        color: #4a5568;
       }
       
       .media-actions {
@@ -219,7 +223,7 @@
         display: inline-block;
         padding: 15px 20px;
         border-radius: 10px;
-        background: linear-gradient(45deg, #667eea, #764ba2);
+        background: linear-gradient(45deg, #ff9a56, #ffd700);
         color: white;
         text-decoration: none;
         font-weight: 600;
