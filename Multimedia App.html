@@ -281,6 +281,14 @@
             <li class="nav-item">
               <a class="nav-link" href="#" data-section="gallery">Gallery</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
+            </li>
+          </ul>
+          <ul class="navbar-nav ms-auto d-none d-lg-flex">
+            <li class="nav-item">
+              <a class="nav-link" href="login.html"><i class="fas fa-sign-in-alt"></i> Login</a>
+            </li>
           </ul>
         </div>
       </div>
@@ -477,6 +485,11 @@
         loadLostPetsCarousel();
         
         $('.nav-link').click(function(e) {
+          // Allow login link to work normally
+          if ($(this).attr('href') === 'login.html') {
+            return; // Don't prevent default
+          }
+          
           e.preventDefault();
           const section = $(this).data('section');
           
