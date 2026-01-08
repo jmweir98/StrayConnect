@@ -89,6 +89,138 @@ function submitNewAsset() {
   });
 }
 
+// === Retrieve and render media list with limit (GET ALL) ===
+function getImagesWithLimit(targetList = '#ImageList', limit = 25) {
+  const $list = $(targetList);
+  const isAdmin = localStorage.getItem('strayconnect_isAdmin') === 'true';
+  
+  $list
+    .addClass("media-grid")
+    .html('<div class="spinner-border" role="status"><span>Loading...</span></div>');
+
+  $.ajax({
+    url: GETALL_URL,
+    type: "GET",
+    dataType: "json",
+    success: function (data) {
+      console.log("Raw data received:", data);
+
+      const items =
+        Array.isArray(data) ? data :
+        Array.isArray(data.Documents) ? data.Documents :
+        Array.isArray(data.documents) ? data.documents :
+        Array.isArray(data.body) ? data.body :
+        Array.isArray(data.value) ? data.value :
+        [];
+
+      if (!Array.isArray(items) || items.length === 0) {
+        $list.html("<p>No media found.</p>");
+        return;
+      }
+
+      // Limit the items to the specified count
+      const limitedItems = items.slice(0, limit);
+      updatePetTypeDropdown(items);
+
+      let videoCounter = 0;
+      const cards = [];
+
+      $.each(limitedItems, function (_, val) {
+        // Same card building logic as getImages...
+        try {
+          const id = unwrapMaybeBase64(val.id || val.Id || "");
+          const pk = unwrapMaybeBase64(val.pk || val.Pk || val.PK || "");
+          const filePath = unwrapMaybeBase64(val.filePath || val.FilePath || "");
+          const fileLocator = unwrapMaybeBase64(val.fileLocator || val.FileLocator || "");
+          const fileName = unwrapMaybeBase64(val.fileName || val.FileName || "");
+          const userName = unwrapMaybeBase64(val.userName || val.UserName || "");
+          const userID = unwrapMaybeBase64(val.userID || val.UserID || val.UserId || "");
+          const petType = unwrapMaybeBase64(val.petType || val.PetType || "");
+          const status = unwrapMaybeBase64(val.status || val.Status || "");
+          const location = unwrapMaybeBase64(val.location || val.Location || "");
+          const description = unwrapMaybeBase64(val.description || val.Description || "");
+          const contentType = val.contentType || val.ContentType || "";
+
+          const fullUrl = buildBlobUrl(filePath);
+          const isVideo = isLikelyVideo({ contentType, url: fullUrl, fileName });
+
+          const cardAttrs = `
+            data-id="${escapeAttr(id)}"
+            data-pk="${escapeAttr(pk)}"
+            data-filepath="${escapeAttr(filePath)}"
+            data-filelocator="${escapeAttr(fileLocator)}"
+            data-filename="${escapeAttr(fileName)}"
+            data-username="${escapeAttr(userName)}"
+            data-userid="${escapeAttr(userID)}"
+            data-pettype="${escapeAttr(petType)}"
+            data-status="${escapeAttr(status)}"
+            data-location="${escapeAttr(location)}"
+            data-description="${escapeAttr(description)}"
+          `;
+
+          if (isVideo) {
+            videoCounter += 1;
+            const label = `video${videoCounter}`;
+            cards.push(`
+              <div class="media-card" ${cardAttrs}>
+                <div class="media-thumb">
+                  <a class="video-link" href="${fullUrl}" target="_blank" download="${escapeAttr(fileName || label)}">${label}</a>
+                </div>
+                <div class="media-body">
+                  <span class="media-title">${escapeHtml(fileName || "(unnamed)")}</span>
+                  <div>Uploaded by: ${escapeHtml(userName || "(unknown)")} (id: ${escapeHtml(userID || "(unknown)")})</div>
+                  <div>Pet Type: ${escapeHtml(petType || "(unknown)")}</div>
+                  <div>Status: ${escapeHtml(status || "(unknown)")}</div>
+                  <div>Location: ${escapeHtml(location || "(unknown)")}</div>
+                  <div>Description: ${escapeHtml(description || "(no description)")}</div>
+                  <div class="media-actions">
+                    <button class="btn btn-sm btn-outline-primary btn-update">Update</button>
+                    <button class="btn btn-sm btn-outline-info btn-translate">Translate</button>
+                    ${isAdmin ? '<button class="btn btn-sm btn-outline-danger btn-delete">Delete</button>' : ''}
+                  </div>
+                </div>
+              </div>
+            `);
+          } else {
+            const safeLabel = escapeHtml(fileName || fullUrl);
+            cards.push(`
+              <div class="media-card" ${cardAttrs}>
+                <div class="media-thumb">
+                  <img src="${fullUrl}"
+                       alt="${safeLabel}"
+                       onerror="imageFallbackToLink(this, '${fullUrl.replace(/'/g,"\\'")}', '${safeLabel.replace(/'/g,"\\'")}')" />
+                </div>
+                <div class="media-body">
+                  <span class="media-title">${safeLabel}</span>
+                  <div>Uploaded by: ${escapeHtml(userName || "(unknown)")} (id: ${escapeHtml(userID || "(unknown)")})</div>
+                  <div>Pet Type: ${escapeHtml(petType || "(unknown)")}</div>
+                  <div>Status: ${escapeHtml(status || "(unknown)")}</div>
+                  <div>Location: ${escapeHtml(location || "(unknown)")}</div>
+                  <div>Description: ${escapeHtml(description || "(no description)")}</div>
+                  <div class="media-actions">
+                    <button class="btn btn-sm btn-outline-primary btn-update">Update</button>
+                    <button class="btn btn-sm btn-outline-info btn-translate">Translate</button>
+                    ${isAdmin ? '<button class="btn btn-sm btn-outline-danger btn-delete">Delete</button>' : ''}
+                  </div>
+                  <div class="image-error"></div>
+                </div>
+              </div>
+            `);
+          }
+        } catch (err) {
+          console.error("Error building card:", err, val);
+        }
+      });
+
+      $list.html(cards.join(""));
+    },
+    error: (xhr, status, error) => {
+      console.error("Error fetching media:", status, error, xhr?.responseText);
+      $list.html("<p style='color:red;'>Error loading media. Check console.</p>");
+    },
+  });
+}
+
 // === Retrieve and render media list (GET ALL) ===
 function getImages(targetList = '#ImageList') {
   const $list = $(targetList);
@@ -445,9 +577,9 @@ function performSearch() {
   const $list = $("#GalleryList");
   $list.html('<div class="spinner-border" role="status"><span>Searching...</span></div>');
   
-  // If no search criteria, just load all
+  // If no search criteria, just load all but limit results
   if (!query && !petType && !status && !location) {
-    getImages('#GalleryList');
+    getImagesWithLimit('#GalleryList', topResults);
     return;
   }
   
@@ -498,9 +630,13 @@ function renderSearchResults(data, targetList = '#GalleryList') {
   
   console.log("Full search response:", data);
   console.log("Parsed items:", items);
+  
+  // Limit results to the requested top count
+  const topResults = parseInt($("#topResults").val()) || 25;
+  const limitedItems = items.slice(0, topResults);
 
   
-  if (!Array.isArray(items) || items.length === 0) {
+  if (!Array.isArray(limitedItems) || limitedItems.length === 0) {
     $list.removeClass("media-grid").html("<p>No search results found.</p>");
     return;
   }
@@ -508,7 +644,7 @@ function renderSearchResults(data, targetList = '#GalleryList') {
   let videoCounter = 0;
   const cards = [];
   
-  $.each(items, function(_, val) {
+  $.each(limitedItems, function(_, val) {
     try {
       const id = unwrapMaybeBase64(val.id || val.Id || "");
       const pk = unwrapMaybeBase64(val.pk || val.Pk || val.PK || "");

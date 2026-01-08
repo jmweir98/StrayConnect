@@ -256,7 +256,18 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav position-absolute start-50 translate-middle-x">
+          <ul class="navbar-nav position-absolute start-50 translate-middle-x d-none d-lg-flex">
+            <li class="nav-item">
+              <a class="nav-link active" href="#" data-section="home">Home</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" data-section="report">Report a Pet</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#" data-section="gallery">Gallery</a>
+            </li>
+          </ul>
+          <ul class="navbar-nav ms-auto d-lg-none">
             <li class="nav-item">
               <a class="nav-link active" href="#" data-section="home">Home</a>
             </li>
@@ -472,6 +483,9 @@
           // Show/hide sections
           $('.page-section').removeClass('active');
           $(`#${section}-section`).addClass('active');
+          
+          // Collapse mobile navbar
+          $('.navbar-collapse').collapse('hide');
           
           // Refresh carousel when navigating to home
           if (section === 'home') {
