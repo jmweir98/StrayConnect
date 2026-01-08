@@ -532,31 +532,55 @@
             }
             
             let carouselItems = '';
-            for (let i = 0; i < lostPets.length; i += 3) {
-              const petsGroup = lostPets.slice(i, i + 3);
-              carouselItems += `
-                <div class="carousel-item ${i === 0 ? 'active' : ''}" style="height: 100%;">
-                  <div class="row h-100 mx-0 align-items-start pt-3">
-              `;
-              
-              petsGroup.forEach(pet => {
+            
+            // Check if mobile view
+            const isMobile = window.innerWidth < 992;
+            
+            if (isMobile) {
+              // Mobile: one image per slide
+              lostPets.forEach((pet, index) => {
                 const fileName = unwrapMaybeBase64(pet.fileName || pet.FileName || "");
                 const filePath = unwrapMaybeBase64(pet.filePath || pet.FilePath || "");
                 const fullUrl = buildBlobUrl(filePath);
                 
                 carouselItems += `
-                  <div class="col-4">
-                    <div style="border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); cursor: pointer;" onclick="goToGallery()">
-                      <img src="${fullUrl}" style="width: 100%; height: 280px; object-fit: cover; display: block; transition: transform 0.3s ease;" alt="${escapeHtml(fileName || 'Lost pet')}" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" />
+                  <div class="carousel-item ${index === 0 ? 'active' : ''}" style="height: 100%;">
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                      <div style="border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); cursor: pointer; width: 90%; max-width: 400px;" onclick="goToGallery()">
+                        <img src="${fullUrl}" style="width: 100%; height: 280px; object-fit: cover; display: block; transition: transform 0.3s ease;" alt="${escapeHtml(fileName || 'Lost pet')}" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" />
+                      </div>
                     </div>
                   </div>
                 `;
               });
-              
-              carouselItems += `
+            } else {
+              // Desktop: three images per slide
+              for (let i = 0; i < lostPets.length; i += 3) {
+                const petsGroup = lostPets.slice(i, i + 3);
+                carouselItems += `
+                  <div class="carousel-item ${i === 0 ? 'active' : ''}" style="height: 100%;">
+                    <div class="row h-100 mx-0 align-items-start pt-3">
+                `;
+                
+                petsGroup.forEach(pet => {
+                  const fileName = unwrapMaybeBase64(pet.fileName || pet.FileName || "");
+                  const filePath = unwrapMaybeBase64(pet.filePath || pet.FilePath || "");
+                  const fullUrl = buildBlobUrl(filePath);
+                  
+                  carouselItems += `
+                    <div class="col-4">
+                      <div style="border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); cursor: pointer;" onclick="goToGallery()">
+                        <img src="${fullUrl}" style="width: 100%; height: 280px; object-fit: cover; display: block; transition: transform 0.3s ease;" alt="${escapeHtml(fileName || 'Lost pet')}" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'" />
+                      </div>
+                    </div>
+                  `;
+                });
+                
+                carouselItems += `
+                    </div>
                   </div>
-                </div>
-              `;
+                `;
+              }
             }
             
             $('#carouselContent').html(carouselItems);
